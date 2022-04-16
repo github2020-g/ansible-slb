@@ -1,0 +1,41 @@
+---
+
+- name: copy CIS
+  copy: src=CIS.conf  dest=/etc/modprobe.d/
+
+- name: copy ssh file
+  copy: src={{ item }}  dest=/etc/ssh/ backup=yes
+  with_items:
+    - ssh_config
+    - sshd_config
+
+- name: yum install ntp
+  yum: name=ntp state=present
+
+- name: copy ntp file
+  copy: src=ntp.conf  dest=/etc/ backup=yes
+
+- name: service enable and start ntpd
+  service: name=ntpd  state=started enabled=yes
+  
+- name: yum remove telnet
+  yum: name=telnet state=absent
+  
+- name: service disable and stop chronyd
+  service: name=chronyd  state=stopped enabled=no
+
+- name: delete localtime link
+  file: name=/etc/localtime  state=absent
+
+- name: add Shanghai time link
+  file: src=/usr/share/zoneinfo/Asia/Shanghai   dest=/etc/localtime    state=link
+
+- name: copy change OS parameters script
+  copy: src=change.sh   dest={{ dir_script }}
+
+- name: run change OS parameters script
+  shell: cd {{ dir_script }} && sh  ./change.sh
+
+
+
+

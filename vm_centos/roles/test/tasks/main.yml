@@ -1,0 +1,4 @@
+---
+
+ - name: test encrypt
+   shell: echo {{ domain_pwd }} >> /tmp/test.pwd

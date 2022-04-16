@@ -1,0 +1,22 @@
+---
+- name: Init,harden,security,samba join AD
+  hosts: centos
+
+  roles:
+    - role: centos_init
+      tags: ["centos_init"]
+
+    - role: harden
+      tags: ["harden"]
+
+    - role: security
+      tags: ["security"]
+
+    - role: joinAD
+      tags: ["joinAD"]
+
+    - role: cron_release
+      tags: ["cron_release"]
+
+    - role: test
+      tags: ["test"]

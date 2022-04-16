@@ -1,0 +1,71 @@
+---
+
+- name: update all packages - this is like running the 'yum update' command
+  yum:
+    name: "*"
+    state: latest
+  register: returnmsg
+  ignore_errors: true
+
+- name: again update all packages - this is like running the 'yum update' command
+  yum:
+    name: "*"
+    state: latest
+  when: returnmsg.rc != 0
+
+- name: copy /etc/default/grub
+  copy: src=grub  dest=/etc/default/ backup=yes
+
+- name: copy /etc/modprobe.d/blacklist.conf
+  copy: src=blacklist.conf  dest=/etc/modprobe.d backup=yes
+
+
+- name: yum install kernel-devel 
+  yum:
+    name:
+     - epel-release
+     - kernel-devel
+    state: present
+  register: returnmsg
+  ignore_errors: true
+
+- name: again yum install kernel-devel 
+  yum:
+    name:
+     - epel-release
+     - kernel-devel
+    state: present
+  when: returnmsg.rc != 0
+  
+- name: yum install dkms ……
+  yum:
+    name:
+     - dkms
+    state: present
+  register: returnmsg
+  ignore_errors: true
+ 
+- name: again yum install dkms ……
+  yum:
+    name:
+     - dkms
+    state: present
+  when: returnmsg.rc != 0
+
+
+- name: run grub2-mkconfig
+  shell: /sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+
+  
+- name: mv /boot/initramfs-*nouveau.img
+  shell: mv /boot/initramfs-$(uname -r).img /boot/initramfs-$(uname -r)-nouveau.img
+  
+- name: /sbin/dracut  boot
+  shell: /sbin/dracut /boot/initramfs-$(uname -r).img $(uname -r)
+   
+- name: copy /etc/X11/
+  copy: src={{ item }}  dest=/etc/X11/ backup=yes
+  with_items:
+    - xorg.conf
+    - edid.bin
+ 

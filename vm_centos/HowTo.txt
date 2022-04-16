@@ -1,0 +1,2 @@
+
+ansible DDCE  -i hosts  -m  shell  -a  'echo "    valid users = +\"DIR\\bgc_ideas_engine_kits_contributtor\", +\"DIR\\Other_IAR_Service_Contributors\"" >> /etc/samba/smb.conf ' --ask-vault-pass

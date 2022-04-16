@@ -1,0 +1,87 @@
+---
+- name: "Check some services is booted successfully"
+  cron:
+    name: "Check some services is booted successfully"
+    special_time: reboot
+    job: /root/bin/bootcheck.sh
+    state: present
+
+- name: "synchronize ideas tools"
+  cron:
+    name: synchronize ideas tools 
+    special_time: hourly
+    job: /root/bin/ideas_cron.sh
+    state: present
+
+- name: "monitor raid disk state"
+  cron:
+    name: "monitor raid disk state"
+    special_time: hourly
+    job: /opt/disk_monitor/bin/megacli_diskcheck.sh
+    state: present
+
+- name: " monitor raid disk number"
+  cron:
+    name: " monitor raid disk number"
+    special_time: daily
+    job: /opt/disk_monitor/bin/megacli_lld.sh
+    state: present
+
+- name: "clean_ict_tests_dir"
+  cron:
+    name: "clean_ict_tests_dir"
+    special_time: weekly
+    job: /root/bin/clean_ddce_ict_tests.sh
+    state: present
+
+
+- name: "copy bootcheck.sh scripts"
+  copy:
+    src: "{{ item }}"
+    dest: "/root/bin/"
+    backup: yes
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+      - bootcheck.sh
+      - ideas_cron.sh
+      - clean_ddce_ict_tests.sh
+
+- name: "copy megacli_diskcheck.sh scripts"
+  copy:
+    src: "megacli_diskcheck.sh"
+    dest: "/opt/disk_monitor/bin/"
+    backup: yes
+    owner: root
+    group: root
+    mode: '0755'
+
+
+- name: "copy megacli_lld.sh scripts"
+  copy:
+    src: "megacli_lld.sh"
+    dest: "/opt/disk_monitor/bin/"
+    backup: yes
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "copy MegaCli64 script"
+  copy:
+    src: "MegaCli64"
+    dest: "/opt/MegaRAID/MegaCli/"
+    backup: yes
+    owner: root
+    group: root
+    mode: '0755'
+    
+- name: "Quarterly! Update RHEL 7 at 20:00 PM on Sunday  "
+  cron:
+    name: Quarterly! Update RHEL 7 at 20:00 PM on Sunday.
+    minute: "0"
+    hour: "20"
+    month: "2,5,8,11"
+    weekday: "0"
+    job: "[[ $(date +%d) -eq $(cal | awk 'NR==5{print $1}') ]] && run-parts /etc/cron.security/ &> /dev/null && shutdown -r +1"
+

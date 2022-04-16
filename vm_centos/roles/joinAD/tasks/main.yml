@@ -1,0 +1,108 @@
+---
+
+- name: yum install sssd ……
+  yum:
+    name:
+     - sssd 
+     - sssd-ldap 
+     - sssd-tools 
+    state: present
+  register: returnmsg
+  ignore_errors: true
+
+
+- name: again yum install sssd ……
+  yum:
+    name:
+     - sssd
+     - sssd-ldap
+     - sssd-tools
+    state: present
+  when: returnmsg.rc != 0
+
+
+- name: yum install oddjob oddjob-mkhomedir openldap-clients samba-common-tools realmd ……
+  yum:
+    name:
+     - oddjob 
+     - oddjob-mkhomedir 
+     - openldap-clients 
+     - samba-common-tools 
+     - realmd 
+    state: present
+  register: returnmsg
+  ignore_errors: true
+
+
+- name: again yum install  oddjob oddjob-mkhomedir openldap-clients samba-common-tools realmd ……
+  yum:
+    name:
+     - oddjob
+     - oddjob-mkhomedir
+     - openldap-clients
+     - samba-common-tools
+     - realmd
+    state: present
+  when: returnmsg.rc != 0
+  
+- name: yum install adcli ntpdate chrony krb5-workstation
+  yum:
+    name:
+     - adcli 
+     - ntpdate 
+     - chrony 
+     - krb5-workstation-1.15.1-37.el7_7.2.x86_64
+    state: present
+  register: returnmsg
+  ignore_errors: true
+
+
+- name: again yum install  adcli ntpdate chrony krb5-workstation
+  yum:
+    name:
+     - adcli 
+     - ntpdate 
+     - chrony 
+     - krb5-workstation-1.15.1-37.el7_7.2.x86_64
+    state: present
+  when: returnmsg.rc != 0
+
+- name: copy /etc/krb5.conf
+  copy: src=krb5.conf  dest=/etc/ backup=yes
+
+- name: copy /etc/samba/smb.conf
+  copy: src=smb.conf  dest=/etc/samba/ backup=yes
+  
+- name: copy /etc/nsswitch.conf
+  copy: src=nsswitch.conf  dest=/etc/ backup=yes
+  
+- name: copy /etc/sssd/sssd.conf
+  copy: src=sssd.conf  dest=/etc/sssd/  mode='0600' backup=yes
+  
+- name: copy /etc/pam.d/system-auth-ac
+  copy: src=system-auth-ac  dest=/etc/pam.d/ backup=yes
+    
+- name: copy /etc/pam.d/password-auth-ac
+  copy: src=password-auth-ac  dest=/etc/pam.d/ backup=yes
+
+- name: copy RealVNC_LDPA.sh
+  copy: src=RealVNC_LDPA.sh  dest={{ dir_script }}
+
+- name: run RealVNC_LDPA.sh
+  shell: sh {{ dir_script }}/RealVNC_LDPA.sh
+  
+- name: login AD
+  shell: echo {{ domain_pwd }} | adcli join --user={{ domain_user }} -D DIR.SLB.COM --domain-ou="OU=EAR-AA-4173,OU=Applications,OU=Servers,DC=DIR,DC=slb,DC=com" --show-details --stdin-password
+
+
+- name: service oddjobd ,sssd enable and start 
+  service: name={{ item }}  state=started enabled=yes
+  with_items:
+    - oddjobd
+    - sssd
+    
+
+
+
+
+

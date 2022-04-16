@@ -1,0 +1,2 @@
+# Auto Update for RHEL Workstations 7 once a week on Sunday at 7pm by default
+10 20 * * Sun root  run-parts /etc/cron.weekly/  > /dev/null 2>&1

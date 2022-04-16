@@ -1,0 +1,215 @@
+---
+- name: stop service NetworkManager
+  service: name=NetworkManager  state=stopped  enabled=no
+
+- name: copy X0.hosts and CDN config file
+  copy: src={{ item }} dest=/etc/ backup=yes
+  with_items:
+    - resolv.conf
+#    - X0.hosts
+
+- name: about export DISPLAY config file
+  copy: src=localuser-analysis7.sh dest=/etc/X11/xinit/xinitrc.d/ backup=yes
+    
+- name: lock resolv.conf
+  shell: chattr +i /etc/resolv.conf
+  
+- name: active_subscription
+  shell: subscription-manager register --username={{ RHEL_user }} --password={{ RHEL_pwd }}  --auto-attach  &&
+         subscription-manager refresh  &&
+         subscription-manager repos  --enable  rhel-7-workstation-rpms --enable  rhel-7-workstation-optional-rpms
+
+- name: SELINUX=disabled
+  selinux: state=disabled
+
+- name: stop firewalld
+  service: name=firewalld  state=stopped  enabled=no
+  
+- name: open max file
+  copy: src={{ item }} dest=/etc/systemd/ backup=yes
+  with_items:
+    - system.conf
+    - user.conf
+
+- name: Edit user max number /etc/security/limits.d/20-nproc.conf
+  replace:
+    path: /etc/security/limits.d/20-nproc.conf
+    regexp: '4096'
+    replace: '65535'
+    backup: yes
+#  shell: sed -i.ori.$(date +%F-%H%M%S)  's/4096/65535/g'   /etc/security/limits.d/20-nproc.conf
+
+- name: mkdir for scripts on remote servers
+  file: path="{{ dir_script }}"  state=directory
+  
+  
+- name: Transhport scripts of  mount NFS,grant sudo,env config,install VSCode/qt-creator/RealVNC/git2
+  copy: src="{{ item }}" dest="{{ dir_script }}" backup=yes
+  with_items:
+    - mnt_NFS.sh
+    - grant_sudo.sh
+    - VSCode.sh
+    - env_config.sh
+    - inst_qtCreator.sh
+    - VNC-Server-{{ VNC_version }}-Linux-x64.rpm
+    - git2.sh
+    - soft_links.sh
+
+  
+- name: run scripts
+  shell: cd "{{ dir_script }}" && sh  ./{{ item }}
+  with_items:
+    - mnt_NFS.sh
+    - grant_sudo.sh
+    - soft_links.sh
+    - env_config.sh
+    - git2.sh
+#    - inst_qtCreator.sh
+  ignore_errors: true
+
+- name: yum localinstall RealVNC rpm
+  yum: name={{ dir_script }}/VNC-Server-{{ VNC_version }}-Linux-x64.rpm  state=present
+  register: returnmsg
+  ignore_errors: true
+
+- name: again yum localinstall RealVNC rpm
+  yum: name={{ dir_script }}/VNC-Server-{{ VNC_version }}-Linux-x64.rpm  state=present
+  when: returnmsg.rc != 0
+
+- name: vnclicense -add
+  shell: vnclicense -add {{ VNC_lic }}
+
+- name: vnc start and enable
+  service: name=vncserver-x11-serviced  state=started  enabled=yes
+
+
+- name: import vscode repo key
+  shell: rpm --import https://packages.microsoft.com/keys/microsoft.asc
+
+- name: install qt epel repo
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+
+- name: copy vscode repo epel
+  copy: src={{ item }}  dest=/etc/yum.repos.d/ backup=yes
+  with_items:
+    - vscode.repo
+    - epel.repo
+
+
+
+- name: yum install  nedit  gitk gthumb  p7zip kdesdk gcc-c++ python3
+  yum:
+    name:
+      - nedit
+      - gitk
+      - gthumb
+      - p7zip
+      - kdesdk
+      - gcc
+      - gcc-c++
+      - python3-devel
+      - python3-tkinter
+      - python3-virtualenv
+    state: latest
+  register: returnmsg
+  ignore_errors: true
+
+
+- name: again yum install  nedit  gitk gthumb  p7zip kdesdk gcc-c++ python3
+  yum:
+    name:
+      - nedit
+      - gitk
+      - gthumb
+      - p7zip
+      - kdesdk
+      - gcc
+      - gcc-c++
+      - python3-devel
+      - python3-tkinter
+      - python3-virtualenv
+    state: latest
+  when: returnmsg.rc != 0
+
+
+- name: yum install  giflib  libpng-devel libjpeg-devel  libtiff-devel giflib-devel mesa-libGLU-devel libXft-devel
+  yum:
+    name:
+      - giflib
+      - libpng-devel
+      - libjpeg-devel
+      - libtiff-devel
+      - giflib-devel
+      - mesa-libGLU-devel
+      - libXft-devel
+    state: latest
+  register: returnmsg
+  ignore_errors: true
+
+
+- name: again yum install  giflib  libpng-devel libjpeg-devel  libtiff-devel giflib-devel mesa-libGLU-devel libXft-devel
+  yum:
+    name:
+      - giflib
+      - libpng-devel
+      - libjpeg-devel
+      - libtiff-devel
+      - giflib-devel
+      - mesa-libGLU-devel
+      - libXft-devel
+    state: latest
+  when: returnmsg.rc != 0
+  
+- name: yum install code
+  yum:
+    name:
+      - code
+    state: latest
+  register: returnmsg
+  ignore_errors: true
+
+- name: again yum install code
+  yum:
+    name:
+      - code
+    state: latest
+  when: returnmsg.rc != 0
+
+- name: yum install  qt valgrind ddd
+  yum:
+    name:
+      - qt
+      - qt-creator
+      - qt5-qtxmlpatterns-devel
+      - qt5-qtbase-devel
+      - valgrind
+#      - kdbg
+      - ddd
+      - qt5-qtbase-mysql
+    state: latest
+  register: returnmsg
+  ignore_errors: true
+
+
+- name: again yum install  qt valgrind ddd
+  yum:
+    name:
+      - qt
+      - qt-creator
+      - qt5-qtxmlpatterns-devel
+      - qt5-qtbase-devel
+      - valgrind
+#      - kdbg
+      - ddd
+      - qt5-qtbase-mysql
+    state: latest
+  when: returnmsg.rc != 0
+
+- name: python lib
+  shell: pip3 install numpy pandas matplotlib  pymongo  pymysql  scipy seaborn  scikit-learn  peewee jinja2
+
+
+
+

@@ -1,0 +1,54 @@
+---
+
+- name: yum install yum-cron
+  yum: 
+    state: present
+    name:
+      - epel-release
+      - yum-cron
+  register: returnmsg
+  ignore_errors: true      
+      
+- name: again yum install yum-cron
+  yum: 
+    state: present
+    name:
+      - epel-release
+      - yum-cron
+  when: returnmsg.rc != 0      
+  
+- name: copy  yum-cron.conf
+  copy: src=yum-cron.conf  dest=/etc/yum/yum-cron.conf backup=yes
+
+- name: delete /etc/yum/yum-cron-hourly.conf
+  file: name=/etc/yum/yum-cron-hourly.conf  state=absent
+
+- name: delete /etc/cron.hourly/0yum-hourly.cron
+  file: name=/etc/cron.hourly/0yum-hourly.cron  state=absent
+
+- name: cron.daily to cron.weekly
+  shell: mkdir -p /etc/cron.security && mv /etc/cron.daily/0yum-daily.cron   /etc/cron.security/
+
+#- name: copy configure file. Function yum -y update --security  
+#  copy: src=yum-update  dest=/etc/cron.d/ backup=yes
+
+#- name: touch /etc/cron.d/yum-update
+#  file: 
+#    path: /etc/cron.d/yum-update
+#    owner: root
+#    group: root
+#    mode: 0644
+#    state: touch
+    
+#- name: Insert crontab in /etc/cron.d/yum-update
+#  blockinfile: 
+#    path: /etc/cron.d/yum-update
+#    block: |
+#      # Auto Update for RHEL workstation 7 once a week on Sunday at 7pm by default
+#      40 18 * * Sun root  run-parts /etc/cron.weekly/  > /dev/null 2>&1
+              
+- name: service crond,yum-cron  enable and start 
+  service: name={{ item }}  state=started enabled=yes
+  with_items:
+    - crond
+    - yum-cron
