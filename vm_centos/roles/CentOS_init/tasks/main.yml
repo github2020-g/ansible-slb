@@ -208,3 +208,23 @@
 - name: python lib
   shell: pip3 install numpy pandas matplotlib  pymongo  pymysql  scipy seaborn  scikit-learn  peewee jinja2
 
+- name: install BigFix agent
+  yum:
+    name: http://software.bigfix.com/download/bes/100/BESAgent-10.0.1.41-rhe6.x86_64.rpm
+    state: present
+
+- name: create dir /etc/opt/BESClient/ and /var/opt/BESClient/ for BigFix
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/opt/BESClient/
+    - /var/opt/BESClient/
+
+- name: download actionsite.afxm  in /etc/opt/BESClient/ for BigFix agent
+  get_url:
+    url: http://ecmsrvnam03.ssds.slb.com:52311/masthead/actionsite.afxm
+    dest: /etc/opt/BESClient/
+
+- name: start BigFix agent
+  shell: "/etc/init.d/besclient start"
