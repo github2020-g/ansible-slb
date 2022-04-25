@@ -210,7 +210,7 @@
 
 - name: install BigFix agent
   yum:
-    name: http://software.bigfix.com/download/bes/100/BESAgent-10.0.1.41-rhe6.x86_64.rpm
+    name: https://software.bigfix.com/download/bes/100/BESAgent-10.0.6.84-rhe6.x86_64.rpm
     state: present
 
 - name: create dir /etc/opt/BESClient/ and /var/opt/BESClient/ for BigFix
